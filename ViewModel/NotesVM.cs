@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace EvernoteClone.WPF.Learning.ViewModel
 {
@@ -27,24 +28,50 @@ namespace EvernoteClone.WPF.Learning.ViewModel
             }
 
         }
+        private Note selectedNote;
+
+        public Note SelectedNote
+        {
+            get { return selectedNote; }
+            set 
+            { 
+                selectedNote = value; 
+                OnPropertyChanged(nameof(SelectedNote)); 
+                SelectedNoteChanged?.Invoke(this, new EventArgs());
+            }
+        }
+
+        private Visibility isVisible;
+
+        public Visibility IsVisible
+        {
+            get { return isVisible; }
+            set { isVisible = value; OnPropertyChanged(nameof(IsVisible)); }
+        }
+
 
         public ObservableCollection<Notebook> Notebooks { get; set; }
         public ObservableCollection<Note> Notes { get; set; }
 
         public NewNotebookCommand NewNotebookCommand { get; set; }
         public NewNoteCommand NewNoteCommand { get; set; }
-
+        public EditCommand EditCommand { get; set; }
+        public EndEditingCommand EndEditingCommand { get; set; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-
+        public event EventHandler SelectedNoteChanged;
 
         public NotesVM()
         {
             NewNoteCommand = new NewNoteCommand(this);
             NewNotebookCommand = new NewNotebookCommand(this);
+            EditCommand = new EditCommand(this);
+            EndEditingCommand = new EndEditingCommand(this);
 
             Notebooks = new ObservableCollection<Notebook>();
             Notes = new ObservableCollection<Note>();
+
+            IsVisible = Visibility.Collapsed;
 
             GetNotebooks();
         }
@@ -110,6 +137,19 @@ namespace EvernoteClone.WPF.Learning.ViewModel
         private void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+
+        public void StartEditing()
+        {
+            IsVisible = Visibility.Visible;
+        }
+
+        public void StopEditing(Notebook notebook)
+        {
+            IsVisible = Visibility.Collapsed;
+            DataBaseHelper.Update(notebook);
+            GetNotebooks();
         }
     }
 }
